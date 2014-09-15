@@ -17,7 +17,7 @@
     <!-- <bean id="hiveDriver" class="org.apache.hive.jdbc.HiveDriver" /> -->
     
     <bean id="hiveDS" class="org.springframework.jdbc.datasource.SimpleDriverDataSource"
-        c:driver-ref="hiveDriver" c:url="jdbc:hive://bt1svl56:10001/default" />
+        c:driver-ref="hiveDriver" c:url="jdbc:hive://localhost:10001/default" />
         
     <bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate" c:data-source-ref="hiveDS" />
      

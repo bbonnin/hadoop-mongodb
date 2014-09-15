@@ -4,7 +4,7 @@ Using SQL to query MongoDB with HIVE
 This project aims to show how to use the [MongoDB connector for Hadoop](http://docs.mongodb.org/ecosystem/tools/hadoop/) in order to make SQL queries on data stored in MongoDB.
 
 ## Design
-This is based on Hive : this tool needs Hadoop to work. The application works in a standalone mode with a embedded Hadoop cluster. 
+This is based on Hive : this tool needs Hadoop to work. The application works in a standalone mode with an embedded Hadoop cluster. 
 
 * The first step is to use the Mini Cluster provided by Hadoop : it is a simple hadoop cluster where all the components are running in a single JVM (HDFS : namenode, datanode; YARN : resource manager, node manager).
 
@@ -21,7 +21,9 @@ In this example, there are two modes:
 ## Configuration
 
 See config files in src/main/resources.
-describe ports
+* hadoop-hive.xml : Hadoop cluster configuration
+* hive-shell.xml : Configuration of the interactive shell
+* jdbc-client.xml : JDBC configuration
 
 ## Compilation
 
@@ -31,7 +33,7 @@ describe ports
 
 ## Run
 
-* Start your MongoDB
+* Start MongoDB
 
 * Start the Hive shell (it includes an embedded Hadoop cluster):
 ``` bash
@@ -40,8 +42,7 @@ rm -f hadoop_mongodb.log
 mvn exec:exec -Dexec.arguments="$*" -Phiveshell
 ```
 
-``` SQL
-# ./hiveshell.sh
+``` bash
 Start the hive shell with the following arguments :
 [INFO] Scanning for projects...
 [INFO]
@@ -54,9 +55,8 @@ Formatting using clusterid: testClusterID
 +---------------------------+
 | Welcome to the Hive Shell |
 +---------------------------+
- >
- >
-
+>
+>
 ```
 
 
@@ -131,7 +131,7 @@ OK
 Total jobs = 1
 Launching Job 1 out of 1
 Number of reduce tasks is set to 0 since there's no reduce operator
-Starting Job = job_1409311417015_0002, Tracking URL = http://bt1svl56:27800/proxy/application_1409311417015_0002/
+Starting Job = job_1409311417015_0002, Tracking URL = http://localhost:27800/proxy/application_1409311417015_0002/
 Kill Command = /usr/bin/hadoop job  -kill job_1409311417015_0002
 Hadoop job information for Stage-3: number of mappers: 1; number of reducers: 0
 2014-08-29 13:32:33,709 Stage-3 map = 0%,  reduce = 0%
@@ -149,12 +149,12 @@ Bobette DRIVER
 ```
 
 * Load data : in order to load data in non-native table, you have to create an temporary table
-** First step : create a temporary table
+  * First step : create a temporary table
 ``` SQL
 create table src_individuals (name string, age int, zipcode int, city string) row format delimited fields terminated by ',';
 ```
 
-** Second step : load the data in the temporary table
+  * Second step : load the data in the temporary table
 ``` SQL
 > load data local inpath 'file:///tmp/data.csv' into table src_individuals;
 Copying data from file:/tmp/data.csv
@@ -164,7 +164,7 @@ Table default.src_individuals stats: [numFiles=2, numRows=0, totalSize=82, rawDa
 OK
 ```
 
-** Last step : insert the data in the collection (it uses a User-Defined Function in order to create an ObjectID instance). Again, for the insert, Hive generates a Map/Reduce job.
+  * Last step : insert the data in the collection (it uses a User-Defined Function in order to create an ObjectID instance). Again, for the insert, Hive generates a Map/Reduce job.
 ``` SQL
 > create temporary function newObjectId as 'hadoopmongo.hive.UDFObjectId';
 OK
@@ -173,7 +173,7 @@ OK
 Total jobs = 1
 Launching Job 1 out of 1
 Number of reduce tasks is set to 0 since there's no reduce operator
-Starting Job = job_1409311417015_0003, Tracking URL = http://bt1svl56:27800/proxy/application_1409311417015_0003/
+Starting Job = job_1409311417015_0003, Tracking URL = http://localhost:27800/proxy/application_1409311417015_0003/
 Kill Command = /usr/bin/hadoop job  -kill job_1409311417015_0003
 Hadoop job information for Stage-0: number of mappers: 1; number of reducers: 0
 2014-08-29 13:44:30,593 Stage-0 map = 0%,  reduce = 0%
@@ -185,13 +185,4 @@ Job 0: Map: 1   Cumulative CPU: 1.91 sec   HDFS Read: 246 HDFS Write: 0 SUCCESS
 Total MapReduce CPU Time Spent: 1 seconds 910 msec
 OK
 
-```
-
-``` SQL
-```
-
-``` SQL
-```
-
-``` SQL
 ```
