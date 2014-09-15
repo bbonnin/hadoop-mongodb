@@ -150,9 +150,9 @@ Bobette DRIVER
 
 * Load data : in order to load data in non-native table, you have to create an temporary table
   * First step : create a temporary table
-``` SQL
-create table src_individuals (name string, age int, zipcode int, city string) row format delimited fields terminated by ',';
-```
+  ``` SQL
+  create table src_individuals (name string, age int, zipcode int, city string) row format delimited fields terminated by ',';
+  ```
 
   * Second step : load the data in the temporary table
 ``` SQL
