@@ -35,42 +35,59 @@ See config files in src/main/resources.
 
 * Start MongoDB
 
-* Start the Hive shell (it includes an embedded Hadoop cluster):
-``` bash
-echo "Start the hive shell with the following arguments : $*"
-rm -f hadoop_mongodb.log
-mvn exec:exec -Dexec.arguments="$*" -Phiveshell
-```
+* Start the Hadoop part :
+  * Option 1 : start the Hive shell (it includes an embedded Hadoop cluster) using hiveshell.sh
+  ``` bash
+  echo "Start the hive shell with the following arguments : $*"
+  rm -f hadoop_mongodb.log
+  mvn exec:exec -Dexec.arguments="$*" -Phiveshell
+  ```
 
-``` bash
-Start the hive shell with the following arguments :
-[INFO] Scanning for projects...
-[INFO]
-[INFO] ------------------------------------------------------------------------
-[INFO] Building hadoop-mongodb 0.0.1-SNAPSHOT
-[INFO] ------------------------------------------------------------------------
-[INFO]
-[INFO] --- exec-maven-plugin:1.3.2:exec (default-cli) @ hadoop-mongodb ---
-Formatting using clusterid: testClusterID
-+---------------------------+
-| Welcome to the Hive Shell |
-+---------------------------+
->
->
-```
+  ``` bash
+  Start the hive shell with the following arguments :
+  [INFO] Scanning for projects...
+  [INFO]
+  [INFO] ------------------------------------------------------------------------
+  [INFO] Building hadoop-mongodb 0.0.1-SNAPSHOT
+  [INFO] ------------------------------------------------------------------------
+  [INFO]
+  [INFO] --- exec-maven-plugin:1.3.2:exec (default-cli) @ hadoop-mongodb ---
+  Formatting using clusterid: testClusterID
+  +---------------------------+
+  | Welcome to the Hive Shell |
+  +---------------------------+
+  >
+  >
+  ```
 
+  Now, you can query your MongoDB (see Queries chapter) !
 
-Now, you can query your MongoDB !
+  * Option 2 : start the Hadoop mini-cluster and a JDBC client
+  ``` bash
+  mvn exec:exec -Dexec.arguments="$*" -Pcluster
+  ```
+  ``` bash
+  mvn exec:exec -Dexec.arguments="$*" -Pjdbcclient
+  ```
+
 
 ## Queries
 
 * Create tables :
 ``` SQL
->  create table jobs (id string, name string, job string) stored by 'com.mongodb.hadoop.hive.MongoStorageHandler' WITH SERDEPROPERTIES('mongo.columns.mapping'='{"id":"_id"}') TBLPROPERTIES('mongo.uri'='mongodb://localhost:27017/test.jobs');
+>  create table jobs (id string, name string, job string) 
+   stored by 'com.mongodb.hadoop.hive.MongoStorageHandler' 
+   WITH SERDEPROPERTIES('mongo.columns.mapping'='{"id":"_id"}') 
+   TBLPROPERTIES('mongo.uri'='mongodb://localhost:27017/test.jobs');
 
 OK
 
-> create table individuals (id struct<oid:string, bsontype:int>, name string, age int, address struct<zipcode:int, city:string>) stored by 'com.mongodb.hadoop.hive.MongoStorageHandler' WITH SERDEPROPERTIES('mongo.columns.mapping'='{"id":"_id"}') TBLPROPERTIES('mongo.uri'='mongodb://localhost:27017/test.individuals', 'columns.comments'='');
+> create table individuals
+  (id struct<oid:string, bsontype:int>, name string, age int, 
+   address struct<zipcode:int, city:string>)
+  stored by 'com.mongodb.hadoop.hive.MongoStorageHandler' 
+  WITH SERDEPROPERTIES('mongo.columns.mapping'='{"id":"_id"}') 
+  TBLPROPERTIES('mongo.uri'='mongodb://localhost:27017/test.individuals', 'columns.comments'='');
 
 OK
 ```
@@ -151,38 +168,39 @@ Bobette DRIVER
 * Load data : in order to load data in non-native table, you have to create an temporary table
   * First step : create a temporary table
   ``` SQL
-  create table src_individuals (name string, age int, zipcode int, city string) row format delimited fields terminated by ',';
+  create table src_individuals (name string, age int, zipcode int, city string)
+     row format delimited fields terminated by ',';
   ```
 
   * Second step : load the data in the temporary table
-``` SQL
-> load data local inpath 'file:///tmp/data.csv' into table src_individuals;
-Copying data from file:/tmp/data.csv
-Copying file: file:/tmp/data.csv
-Loading data to table default.src_individuals
-Table default.src_individuals stats: [numFiles=2, numRows=0, totalSize=82, rawDataSize=0]
-OK
-```
+  ``` SQL
+  > load data local inpath 'file:///tmp/data.csv' into table src_individuals;
+  Copying data from file:/tmp/data.csv
+  Copying file: file:/tmp/data.csv
+  Loading data to table default.src_individuals
+  Table default.src_individuals stats: [numFiles=2, numRows=0, totalSize=82, rawDataSize=0]
+  OK
+  ```
 
   * Last step : insert the data in the collection (it uses a User-Defined Function in order to create an ObjectID instance). Again, for the insert, Hive generates a Map/Reduce job.
-``` SQL
-> create temporary function newObjectId as 'hadoopmongo.hive.UDFObjectId';
-OK
-
-> insert into table individuals select newObjectId() as id, name, age, named_struct('zipcode', zipcode, 'city', city) as address from src_individuals;
-Total jobs = 1
-Launching Job 1 out of 1
-Number of reduce tasks is set to 0 since there's no reduce operator
-Starting Job = job_1409311417015_0003, Tracking URL = http://localhost:27800/proxy/application_1409311417015_0003/
-Kill Command = /usr/bin/hadoop job  -kill job_1409311417015_0003
-Hadoop job information for Stage-0: number of mappers: 1; number of reducers: 0
-2014-08-29 13:44:30,593 Stage-0 map = 0%,  reduce = 0%
-2014-08-29 13:44:39,147 Stage-0 map = 100%,  reduce = 0%, Cumulative CPU 1.91 sec
-MapReduce Total cumulative CPU time: 1 seconds 910 msec
-Ended Job = job_1409311417015_0003
-MapReduce Jobs Launched:
-Job 0: Map: 1   Cumulative CPU: 1.91 sec   HDFS Read: 246 HDFS Write: 0 SUCCESS
-Total MapReduce CPU Time Spent: 1 seconds 910 msec
-OK
-
-```
+  ``` SQL
+  > create temporary function newObjectId as 'hadoopmongo.hive.UDFObjectId';
+  OK
+  
+  > insert into table individuals select newObjectId() as id, name, age, named_struct('zipcode', zipcode, 'city', city) as address from src_individuals;
+  Total jobs = 1
+  Launching Job 1 out of 1
+  Number of reduce tasks is set to 0 since there's no reduce operator
+  Starting Job = job_1409311417015_0003, Tracking URL = http://localhost:27800/proxy/application_1409311417015_0003/
+  Kill Command = /usr/bin/hadoop job  -kill job_1409311417015_0003
+  Hadoop job information for Stage-0: number of mappers: 1; number of reducers: 0
+  2014-08-29 13:44:30,593 Stage-0 map = 0%,  reduce = 0%
+  2014-08-29 13:44:39,147 Stage-0 map = 100%,  reduce = 0%, Cumulative CPU 1.91 sec
+  MapReduce Total cumulative CPU time: 1 seconds 910 msec
+  Ended Job = job_1409311417015_0003
+  MapReduce Jobs Launched:
+  Job 0: Map: 1   Cumulative CPU: 1.91 sec   HDFS Read: 246 HDFS Write: 0 SUCCESS
+  Total MapReduce CPU Time Spent: 1 seconds 910 msec
+  OK
+  
+  ```
