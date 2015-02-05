@@ -10,6 +10,7 @@ public class HiveServer2Launcher {
         hiveConf.set("javax.jdo.option.ConnectionURL", "jdbc:derby:;databaseName=metastore_db;create=true");
         hiveConf.set("javax.jdo.option.ConnectionDriverName", "org.apache.derby.jdbc.EmbeddedDriver");
         hiveConf.set("hive.metastore.warehouse.dir", "file:///tmp");
+        hiveConf.set("hive.server2.thrift.port", "11000");
 
         /*<!--hive.metastore.local=true
                 mapreduce.framework.name=yarn
