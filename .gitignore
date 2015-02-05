@@ -10,3 +10,4 @@ build
 .project
 *.log
 readme.txt
+metastore_db
